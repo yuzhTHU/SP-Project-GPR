@@ -5,19 +5,22 @@ import matplotlib.pyplot as plt
 
 # @contextmanager
 class visualization(object):
-    def __init__(self, axsize=(1,1), figsize=(8,5)):
+    def __init__(self, axsize=(1,1), figsize=(8,5), show=True):
         super().__init__()
         self.fig, self.axes = plt.subplots(*axsize, figsize=figsize)
+        self.show = show
     
     def __enter__(self):
-        plt.ion()
-        plt.show() # 实时显示，动态更新
+        if(self.show):
+            plt.ion()
+            plt.show() # 实时显示，动态更新
         return self, self.fig, self.axes
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         plt.legend()
-        plt.ioff()
-        plt.show() # 保持显示
+        if(self.show):
+            plt.ioff()
+            plt.show() # 保持显示
     
     def set_data(self, x, mu, std):
         self.x = x
