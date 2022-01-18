@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 from scipy.optimize import minimize
+from visualization import plot_confidence_interval, plot_predict_result
 
 class GPR:
 
@@ -45,7 +46,8 @@ class GPR:
         
         mu = Kfy.T.dot(Kff_inv).dot(self.train_y)
         cov = Kyy - Kfy.T.dot(Kff_inv).dot(Kfy)
-        return mu, cov
+        std = np.sqrt(np.diag(cov))
+        return mu, std
 
     def kernel(self, x1, x2):
         dist_matrix = np.sum(x1**2, 1).reshape(-1, 1) + np.sum(x2**2, 1) - 2 * np.dot(x1, x2.T)
