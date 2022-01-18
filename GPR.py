@@ -6,35 +6,39 @@ from scipy.optimize import minimize
 from visualization import visualization
 
 class GPR:
-
     def __init__(self, optimize=True):
         self.is_fit = False
         self.train_X, self.train_y = None, None
-        self.params = {"r": 2.0, "alpha":2.0, "v0": 2.0, "v1": 0.0, "v2": 0.0}
+        self.params = {"r": 2.0, "alpha":2.0, "v0": 2.0, "v1": 0.0, "v2": 0.0, "r2": 20.0, "v02": 1.0}
         self.optimize = optimize
         self.y_mean = 0
         self.d = 0
 
-    def fit(self, X, y, r_range=(1e-4,1e4), alpha_range=(1.0,3.0), v0_range=(1e-4,1e4), v1_range=(1e-4,1e4), v2_range=(1e-4,1)):
+    def fit(self, X, y, **optim_range):
         # store train data
         self.y_mean = np.mean(y)
         self.train_X = np.asarray(X)
         self.train_y = np.asarray(y) - self.y_mean
         self.d = self.train_X.shape[1]
+        for item in list(optim_range):
+            if(isinstance(optim_range[item], (int, float))):
+                self.params[item] = optim_range.pop(item)
 
-         # hyper parameters optimization
+        # hyper parameters optimization
         def negative_log_likelihood_loss(params):
-            self.params["r"], self.params["alpha"], self.params["v0"], self.params["v1"], self.params["v2"] = params[0], params[1], params[2], params[3], params[4]
+            for i, p in enumerate(optim_range):
+                self.params[p] = params[i]
             Kyy = self.kernel(self.train_X, self.train_X) + 1e-8 * np.eye(len(self.train_X))
             loss = 0.5 * self.train_y.T.dot(np.linalg.inv(Kyy)).dot(self.train_y) + 0.5 * np.linalg.slogdet(Kyy)[1] + 0.5 * len(self.train_X) * np.log(2 * np.pi)
             return loss.ravel()
 
         if self.optimize:
             res = minimize(negative_log_likelihood_loss, 
-                [self.params["r"], self.params["alpha"], self.params["v0"], self.params["v1"], self.params["v2"]],
-                bounds=(r_range, alpha_range, v0_range, v1_range, v2_range),
+                [self.params[p] for p in optim_range],
+                bounds=tuple(optim_range.values()),
                 method='L-BFGS-B')
-            self.params["r"], self.params["alpha"], self.params["v0"], self.params["v1"], self.params["v2"] = res.x[0], res.x[1], res.x[2], res.x[3], res.x[4]
+            for i, p in enumerate(optim_range):
+                self.params[p] = res.x[i]
 
         self.is_fit = True
 
