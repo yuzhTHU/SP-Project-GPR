@@ -10,8 +10,7 @@ data = pd.read_excel(r'grid.xls')[:-1]
 data.insert(loc=0, column='Index', value=np.arange(data.shape[0]))
 
 gpr = GPR(optimize=True)
-gpr.fit(data['Index'][:100:5].values.reshape(-1, 1), data['Close'][:100:5].values.reshape(-1, 1))
-mu, std = gpr.predict(data['Index'][:250].values.reshape(-1, 1))
+gpr.fit(train_X, train_y, alpha_range=(0.5,2.5), r_range=(1e2, 1e3), v2_range=(1e-4,1))
 
 with visualization() as (vis, fig, ax):
     vis.set_data(data['Index'][:250].values.reshape(-1), mu.reshape(-1), std)

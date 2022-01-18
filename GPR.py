@@ -15,7 +15,7 @@ class GPR:
         self.y_mean = 0
         self.d = 0
 
-    def fit(self, X, y):
+    def fit(self, X, y, r_range=(1e-4,1e4), alpha_range=(1.0,3.0), v0_range=(1e-4,1e4), v1_range=(1e-4,1e4), v2_range=(1e-4,1)):
         # store train data
         self.y_mean = np.mean(y)
         self.train_X = np.asarray(X)
@@ -32,7 +32,7 @@ class GPR:
         if self.optimize:
             res = minimize(negative_log_likelihood_loss, 
                 [self.params["r"], self.params["alpha"], self.params["v0"], self.params["v1"], self.params["v2"]],
-                bounds=((1e-4, 1e4), (1.9, 2.1), (1e-4, 1e4), (0, 1e-4), (0, 1e-4)),
+                bounds=(r_range, alpha_range, v0_range, v1_range, v2_range),
                 method='L-BFGS-B')
             self.params["r"], self.params["alpha"], self.params["v0"], self.params["v1"], self.params["v2"] = res.x[0], res.x[1], res.x[2], res.x[3], res.x[4]
 
