@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 from scipy.optimize import minimize
-from visualization import plot_confidence_interval, plot_predict_result
+from visualization import visualization
 
 class GPR:
 
@@ -67,19 +67,12 @@ if __name__ == '__main__':
     gpr = GPR()
     gpr.fit(train_X, train_y)
     mu, std = gpr.predict(test_X)
-
-    test_y = mu.ravel()
-    uncertainty = 1.96 * std
-    fig, ax = plt.subplots(1, 1)
-    ax.set_title("l=%.2f sigma_f=%.2f" % (gpr.params["l"], gpr.params["sigma_f"]))
-    plot_confidence_interval(ax, test_X.reshape(-1), mu.reshape(-1), std, 0.99)
-    plot_confidence_interval(ax, test_X.reshape(-1), mu.reshape(-1), std, 0.95)
-    plot_confidence_interval(ax, test_X.reshape(-1), mu.reshape(-1), std, 0.9)
-    plot_predict_result(ax, test_X.reshape(-1), mu.reshape(-1))
-
-    ax.scatter(train_X, train_y, label="train", c="red", marker="x")
-    plt.legend()
-    plt.show()
+    with visualization() as (vis, fig, ax):
+        vis.set_data(test_X.reshape(-1), mu.reshape(-1), std)
+        vis.plot_confidence_interval(ax, 0.95)
+        vis.plot_predict_result(ax)
+        ax.set_title(f"r={gpr.params['r']:.2f} alpha={gpr.params['alpha']:.2f} v0={gpr.params['v0']:.2f}")
+        ax.scatter(train_X, train_y, label="train", c="red", marker="x")
     
     # def y_2d(x, noise_sigma=0.0):
     #     x = np.asarray(x)
