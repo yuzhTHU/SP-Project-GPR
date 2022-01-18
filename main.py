@@ -18,7 +18,14 @@ train_y = data['Close'][:1000:4].values.reshape(-1, 1)
 test_X = data['Index'][:].values.reshape(-1, 1)
 
 gpr = GPR(optimize=True)
-gpr.fit(train_X, train_y, alpha_range=(0.5,2.5), r_range=(1e2, 1e3), v2_range=(1e-4,1))
+## Visualization of Different Kernel Functions
+with visualization(axsize=(4,1), figsize=(5,8), show=False) as (vis, fig, axes):
+    vis.plot_kernal(axes[0], gpr.squared_exponential_kernel, name="Squared Exponential Kernel")
+    vis.plot_kernal(axes[1], gpr.LS_squared_exponential_kernel, name="LS Squared Exponential Kernel")
+    vis.plot_kernal(axes[2], gpr.sin_exponential_kernel, name="Sin Exponential Kernel")
+    vis.plot_kernal(axes[3], gpr.decay_sin_exponential_kernel, name="Decay Sin Exponential Kernel")
+    plt.suptitle('Visualization of Different Kernel Functions')
+    plt.subplots_adjust(left=.106,bottom=.035,right=.963,top=.902,wspace=.2,hspace=.389)
 mu, std = gpr.predict(test_X)
 
 with visualization(axsize=(3,1)) as (vis, fig, axes):
