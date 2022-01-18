@@ -56,7 +56,8 @@ class GPR:
 
     def kernel(self, x1, x2):
         A = np.abs(x1.reshape(-1, 1, self.d) - x2.reshape(1, -1, self.d))
-        return self.params["v0"] * np.exp(-np.sum(A**self.params["alpha"] / self.params["r"].reshape(1, 1, self.d), 2) / 2.) + self.params["v1"]
+        B = A**self.params["alpha"] / self.params["r"].reshape(1, 1, self.d)
+        return self.params["v0"] * np.exp(-np.sum(B, 2) / 2.) + self.params["v1"] + self.params["v2"] * (x1.reshape(-1, 1) == x2.reshape(1, -1))
 
 if __name__ == '__main__':
     def y(x, noise_sigma=0.0):
