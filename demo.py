@@ -52,51 +52,57 @@ class GPR:
         return self.params["sigma_f"] ** 2 * np.exp(-0.5 / self.params["l"] ** 2 * dist_matrix)
 
 
-# def y(x, noise_sigma=0.0):
-#     x = np.asarray(x)
-#     y = np.cos(x) + np.random.normal(0, noise_sigma, size=x.shape)
-#     return y.tolist()
+if __name__ == '__main__':
+    def y(x, noise_sigma=0.0):
+        x = np.asarray(x)
+        y = np.cos(x) + np.random.normal(0, noise_sigma, size=x.shape)
+        return y.tolist()
 
-# train_X = np.array([3, 1, 4, 5, 9]).reshape(-1, 1)
-# train_y = y(train_X, noise_sigma=1e-4)
-# test_X = np.arange(0, 15, 0.1).reshape(-1, 1)
+    train_X = np.array([3, 1, 4, 5, 9]).reshape(-1, 1)
+    train_y = y(train_X, noise_sigma=1e-4)
+    test_X = np.arange(0, 15, 0.1).reshape(-1, 1)
 
-# gpr = GPR()
-# gpr.fit(train_X, train_y)
-# mu, cov = gpr.predict(test_X)
-# test_y = mu.ravel()
-# uncertainty = 1.96 * np.sqrt(np.diag(cov))
-# plt.figure()
-# plt.title("l=%.2f sigma_f=%.2f" % (gpr.params["l"], gpr.params["sigma_f"]))
-# plt.fill_between(test_X.ravel(), test_y + uncertainty, test_y - uncertainty, alpha=0.1)
-# plt.plot(test_X, test_y, label="predict")
-# plt.scatter(train_X, train_y, label="train", c="red", marker="x")
-# plt.legend()
+    gpr = GPR()
+    gpr.fit(train_X, train_y)
+    mu, std = gpr.predict(test_X)
 
-def y_2d(x, noise_sigma=0.0):
-    x = np.asarray(x)
-    y = np.sin(0.5 * np.linalg.norm(x, axis=1))
-    y += np.random.normal(0, noise_sigma, size=y.shape)
-    return y
+    test_y = mu.ravel()
+    uncertainty = 1.96 * std
+    fig, ax = plt.subplots(1, 1)
+    ax.set_title("l=%.2f sigma_f=%.2f" % (gpr.params["l"], gpr.params["sigma_f"]))
+    plot_confidence_interval(ax, test_X.reshape(-1), mu.reshape(-1), std, 0.99)
+    plot_confidence_interval(ax, test_X.reshape(-1), mu.reshape(-1), std, 0.95)
+    plot_confidence_interval(ax, test_X.reshape(-1), mu.reshape(-1), std, 0.9)
+    plot_predict_result(ax, test_X.reshape(-1), mu.reshape(-1))
 
-train_X = np.random.uniform(-4, 4, (100, 2)).tolist()
-train_y = y_2d(train_X, noise_sigma=1e-4)
+    ax.scatter(train_X, train_y, label="train", c="red", marker="x")
+    plt.legend()
+    plt.show()
+    
+    # def y_2d(x, noise_sigma=0.0):
+    #     x = np.asarray(x)
+    #     y = np.sin(0.5 * np.linalg.norm(x, axis=1))
+    #     y += np.random.normal(0, noise_sigma, size=y.shape)
+    #     return y
 
-test_d1 = np.arange(-5, 5, 0.2)
-test_d2 = np.arange(-5, 5, 0.2)
-test_d1, test_d2 = np.meshgrid(test_d1, test_d2)
-test_X = [[d1, d2] for d1, d2 in zip(test_d1.ravel(), test_d2.ravel())]
+    # train_X = np.random.uniform(-4, 4, (100, 2)).tolist()
+    # train_y = y_2d(train_X, noise_sigma=1e-4)
 
-gpr = GPR(optimize=True)
-gpr.fit(train_X, train_y)
-mu, cov = gpr.predict(test_X)
-z = mu.reshape(test_d1.shape)
+    # test_d1 = np.arange(-5, 5, 0.2)
+    # test_d2 = np.arange(-5, 5, 0.2)
+    # test_d1, test_d2 = np.meshgrid(test_d1, test_d2)
+    # test_X = [[d1, d2] for d1, d2 in zip(test_d1.ravel(), test_d2.ravel())]
 
-fig = plt.figure(figsize=(7, 5))
-ax = Axes3D(fig, auto_add_to_figure=False)
-fig.add_axes(ax)
-ax.plot_surface(test_d1, test_d2, z, cmap=cm.coolwarm, linewidth=0, alpha=0.2, antialiased=False)
-ax.scatter(np.asarray(train_X)[:,0], np.asarray(train_X)[:,1], train_y, c=train_y, cmap=cm.coolwarm)
-ax.contourf(test_d1, test_d2, z, zdir='z', offset=0, cmap=cm.coolwarm, alpha=0.6)
-ax.set_title("l=%.2f sigma_f=%.2f" % (gpr.params["l"], gpr.params["sigma_f"]))
-plt.show()
+    # gpr = GPR(optimize=True)
+    # gpr.fit(train_X, train_y)
+    # mu, cov = gpr.predict(test_X)
+    # z = mu.reshape(test_d1.shape)
+
+    # fig = plt.figure(figsize=(7, 5))
+    # ax = Axes3D(fig, auto_add_to_figure=False)
+    # fig.add_axes(ax)
+    # ax.plot_surface(test_d1, test_d2, z, cmap=cm.coolwarm, linewidth=0, alpha=0.2, antialiased=False)
+    # ax.scatter(np.asarray(train_X)[:,0], np.asarray(train_X)[:,1], train_y, c=train_y, cmap=cm.coolwarm)
+    # ax.contourf(test_d1, test_d2, z, zdir='z', offset=0, cmap=cm.coolwarm, alpha=0.6)
+    # ax.set_title("l=%.2f sigma_f=%.2f" % (gpr.params["l"], gpr.params["sigma_f"]))
+    # plt.show()
