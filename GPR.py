@@ -67,7 +67,7 @@ class GPR:
     def squared_exponential_kernel(self, x1, x2):
         A = np.abs(x1.reshape(-1, 1, self.d) - x2.reshape(1, -1, self.d))
         B = A**self.params["alpha"] / np.array(self.params["r"]).reshape(1, 1, self.d)
-        return self.params["v0"] * np.exp(-np.sum(B, 2) / 2.) + self.params["v1"] + self.params["v2"] * (x1.reshape(-1, 1) == x2.reshape(1, -1))
+        return self.params["v0"] * np.exp(-np.sum(B, 2) / 2.) + self.params["v1"] + self.params["v2"] * np.all(x1.reshape(-1, 1, self.d) == x2.reshape(1, -1, self.d), axis=2)
 
     def LS_squared_exponential_kernel(self, x1, x2):
         A = np.abs(x1.reshape(-1, 1, self.d) - x2.reshape(1, -1, self.d))
@@ -75,13 +75,13 @@ class GPR:
         B2 = A**self.params["alpha"] / np.array(self.params["r2"]).reshape(1, 1, self.d)
         v0 = self.params["v0"] * np.exp(-np.sum(B1, 2) / 2.) + self.params["v02"] * np.exp(-np.sum(B2, 2) / 2.)
         v1 = self.params["v1"]
-        v2 = self.params["v2"] * (x1.reshape(-1, 1) == x2.reshape(1, -1))
+        v2 = self.params["v2"] * np.all(x1.reshape(-1, 1, self.d) == x2.reshape(1, -1, self.d), axis=2)
         return v0 + v1 + v2
     
     def sin_exponential_kernel(self, x1, x2):
         A = np.abs(x1.reshape(-1, 1, self.d) - x2.reshape(1, -1, self.d))
         B = np.sin(self.params["nu"] * np.pi * A) / np.array(self.params["r"]).reshape(1, 1, self.d)
-        return self.params["v0"] * np.exp(-np.sum(B, 2) / 2.) + self.params["v1"] + self.params["v2"] * (x1.reshape(-1, 1) == x2.reshape(1, -1))
+        return self.params["v0"] * np.exp(-np.sum(B, 2) / 2.) + self.params["v1"] + self.params["v2"] * np.all(x1.reshape(-1, 1, self.d) == x2.reshape(1, -1, self.d), axis=2)
 
     def decay_sin_exponential_kernel(self, x1, x2):
         A = np.abs(x1.reshape(-1, 1, self.d) - x2.reshape(1, -1, self.d))
@@ -89,7 +89,7 @@ class GPR:
         C = A**2 / np.array(self.params["r2"]).reshape(1, 1, self.d)
         v0 = self.params["v0"] * np.exp(-np.sum(C, 2) / 2.) * np.exp(-np.sum(B, 2) / 2.)
         v1 = self.params["v1"]
-        v2 = self.params["v2"] * (x1.reshape(-1, 1) == x2.reshape(1, -1))
+        v2 = self.params["v2"] * np.all(x1.reshape(-1, 1, self.d) == x2.reshape(1, -1, self.d), axis=2)
         return v0 + v1 + v2
 
 if __name__ == '__main__':
