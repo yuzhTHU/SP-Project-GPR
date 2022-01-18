@@ -5,15 +5,14 @@ import matplotlib.pyplot as plt
 
 # @contextmanager
 class visualization(object):
-    def __init__(self):
+    def __init__(self, axsize=(1,1), figsize=(8,5)):
         super().__init__()
+        self.fig, self.axes = plt.subplots(*axsize, figsize=figsize)
     
     def __enter__(self):
-        fig, axes = plt.subplots(1, 1)
         plt.ion()
-        plt.grid('on')
         plt.show() # 实时显示，动态更新
-        return self, fig, axes
+        return self, self.fig, self.axes
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         plt.legend()
