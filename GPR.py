@@ -12,11 +12,15 @@ class GPR:
         self.train_X, self.train_y = None, None
         self.params = {"r": 2.0, "alpha":2.0, "v0": 2.0, "v1": 0.0, "v2": 0.0}
         self.optimize = optimize
+        self.y_mean = 0
+        self.d = 0
 
     def fit(self, X, y):
         # store train data
+        self.y_mean = np.mean(y)
         self.train_X = np.asarray(X)
-        self.train_y = np.asarray(y)
+        self.train_y = np.asarray(y) - self.y_mean
+        self.d = self.train_X.shape[1]
 
          # hyper parameters optimization
         def negative_log_likelihood_loss(params):
@@ -45,7 +49,7 @@ class GPR:
         Kfy = self.kernel(self.train_X, X)  # (N, k)
         Kff_inv = np.linalg.inv(Kff + 1e-8 * np.eye(len(self.train_X)))  # (N, N)
         
-        mu = Kfy.T.dot(Kff_inv).dot(self.train_y)
+        mu = Kfy.T.dot(Kff_inv).dot(self.train_y) + self.y_mean
         cov = Kyy - Kfy.T.dot(Kff_inv).dot(Kfy)
         std = np.sqrt(np.diag(cov))
         return mu, std
