@@ -34,7 +34,7 @@ class visualization(object):
     def show_param(self, ax, gpr):
         ax.set_title(", ".join([param + "=" + f"{gpr.params[param]:.1f}" for param in gpr.params]))
 
-    def plot_kernal(self, ax, kernal, name):
+    def plot_kernal(self, ax, kernal, name=None):
         x1 = np.arange(-50, 50, .1).reshape(-1, 1)
 
         k = kernal(np.array([-10]).reshape(-1, 1), x1).squeeze(0)
@@ -46,6 +46,7 @@ class visualization(object):
         k = kernal(np.array([10]).reshape(-1, 1), x1).squeeze(0)
         ax.plot(x1, k, 'g', label=f'x0=10', linewidth=1, alpha=0.3)
 
-        ax.set_title(name)
+        if(name):
+            ax.set_title(name)
         ax.legend()
         ax.grid('on')
