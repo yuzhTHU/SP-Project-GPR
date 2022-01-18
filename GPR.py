@@ -62,7 +62,7 @@ if __name__ == '__main__':
     def y(x, noise_sigma=0.0):
         x = np.asarray(x)
         y = np.cos(x) + np.random.normal(0, noise_sigma, size=x.shape)
-        return y.tolist()
+        return y
 
     train_X = np.array([3, 1, 4, 5, 9]).reshape(-1, 1)
     train_y = y(train_X, noise_sigma=1e-4)
