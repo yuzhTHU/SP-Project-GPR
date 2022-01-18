@@ -10,7 +10,7 @@ class GPR:
     def __init__(self, optimize=True):
         self.is_fit = False
         self.train_X, self.train_y = None, None
-        self.params = {"l": 0.5, "sigma_f": 0.2}
+        self.params = {"r": 2.0, "alpha":2.0, "v0": 2.0, "v1": 0.0, "v2": 0.0}
         self.optimize = optimize
 
     def fit(self, X, y):
@@ -20,16 +20,17 @@ class GPR:
 
          # hyper parameters optimization
         def negative_log_likelihood_loss(params):
-            self.params["l"], self.params["sigma_f"] = params[0], params[1]
+            self.params["r"], self.params["alpha"], self.params["v0"], self.params["v1"], self.params["v2"] = params[0], params[1], params[2], params[3], params[4]
             Kyy = self.kernel(self.train_X, self.train_X) + 1e-8 * np.eye(len(self.train_X))
             loss = 0.5 * self.train_y.T.dot(np.linalg.inv(Kyy)).dot(self.train_y) + 0.5 * np.linalg.slogdet(Kyy)[1] + 0.5 * len(self.train_X) * np.log(2 * np.pi)
             return loss.ravel()
 
         if self.optimize:
-            res = minimize(negative_log_likelihood_loss, [self.params["l"], self.params["sigma_f"]],
-                   bounds=((1e-4, 1e4), (1e-4, 1e4)),
-                   method='L-BFGS-B')
-            self.params["l"], self.params["sigma_f"] = res.x[0], res.x[1]
+            res = minimize(negative_log_likelihood_loss, 
+                [self.params["r"], self.params["alpha"], self.params["v0"], self.params["v1"], self.params["v2"]],
+                bounds=((1e-4, 1e4), (1.9, 2.1), (1e-4, 1e4), (0, 1e-4), (0, 1e-4)),
+                method='L-BFGS-B')
+            self.params["r"], self.params["alpha"], self.params["v0"], self.params["v1"], self.params["v2"] = res.x[0], res.x[1], res.x[2], res.x[3], res.x[4]
 
         self.is_fit = True
 
@@ -50,9 +51,8 @@ class GPR:
         return mu, std
 
     def kernel(self, x1, x2):
-        dist_matrix = np.sum(x1**2, 1).reshape(-1, 1) + np.sum(x2**2, 1) - 2 * np.dot(x1, x2.T)
-        return self.params["sigma_f"] ** 2 * np.exp(-0.5 / self.params["l"] ** 2 * dist_matrix)
-
+        A = np.abs(x1.reshape(-1, 1, self.d) - x2.reshape(1, -1, self.d))
+        return self.params["v0"] * np.exp(-np.sum(A**self.params["alpha"] / self.params["r"].reshape(1, 1, self.d), 2) / 2.) + self.params["v1"]
 
 if __name__ == '__main__':
     def y(x, noise_sigma=0.0):
