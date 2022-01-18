@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from demo import GPR
+from GPR import GPR
 
 pd.set_option('display.notebook_repr_html',False)
 data = pd.read_excel(r'grid.xls')[:-1]
