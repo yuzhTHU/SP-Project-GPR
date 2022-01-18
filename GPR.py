@@ -6,13 +6,19 @@ from scipy.optimize import minimize
 from visualization import visualization
 
 class GPR:
-    def __init__(self, optimize=True):
+    def __init__(self, optimize=True, kernel='squared_exp'):
         self.is_fit = False
         self.train_X, self.train_y = None, None
-        self.params = {"r": 2.0, "alpha":2.0, "v0": 2.0, "v1": 0.0, "v2": 0.0, "r2": 20.0, "v02": 1.0}
+        self.params = {"r": 2.0, "alpha":2.0, "v0": 2.0, "v1": 0.0, "v2": 0.0, "r2": 20.0, "v02": 1.0, "nu":1.0}
         self.optimize = optimize
         self.y_mean = 0
-        self.d = 0
+        self.d = 1
+        self.kernel = {
+            'squared_exp': self.squared_exponential_kernel, 
+            'LS_squared_exp': self.LS_squared_exponential_kernel,
+            'sin_exp': self.sin_exponential_kernel,
+            'decay_sin_exp': self.decay_sin_exponential_kernel
+        }[kernel]
 
     def fit(self, X, y, **optim_range):
         # store train data
@@ -58,10 +64,33 @@ class GPR:
         std = np.sqrt(np.diag(cov))
         return mu, std
 
-    def kernel(self, x1, x2):
+    def squared_exponential_kernel(self, x1, x2):
         A = np.abs(x1.reshape(-1, 1, self.d) - x2.reshape(1, -1, self.d))
-        B = A**self.params["alpha"] / self.params["r"].reshape(1, 1, self.d)
+        B = A**self.params["alpha"] / np.array(self.params["r"]).reshape(1, 1, self.d)
         return self.params["v0"] * np.exp(-np.sum(B, 2) / 2.) + self.params["v1"] + self.params["v2"] * (x1.reshape(-1, 1) == x2.reshape(1, -1))
+
+    def LS_squared_exponential_kernel(self, x1, x2):
+        A = np.abs(x1.reshape(-1, 1, self.d) - x2.reshape(1, -1, self.d))
+        B1 = A**self.params["alpha"] / np.array(self.params["r"]).reshape(1, 1, self.d)
+        B2 = A**self.params["alpha"] / np.array(self.params["r2"]).reshape(1, 1, self.d)
+        v0 = self.params["v0"] * np.exp(-np.sum(B1, 2) / 2.) + self.params["v02"] * np.exp(-np.sum(B2, 2) / 2.)
+        v1 = self.params["v1"]
+        v2 = self.params["v2"] * (x1.reshape(-1, 1) == x2.reshape(1, -1))
+        return v0 + v1 + v2
+    
+    def sin_exponential_kernel(self, x1, x2):
+        A = np.abs(x1.reshape(-1, 1, self.d) - x2.reshape(1, -1, self.d))
+        B = np.sin(self.params["nu"] * np.pi * A) / np.array(self.params["r"]).reshape(1, 1, self.d)
+        return self.params["v0"] * np.exp(-np.sum(B, 2) / 2.) + self.params["v1"] + self.params["v2"] * (x1.reshape(-1, 1) == x2.reshape(1, -1))
+
+    def decay_sin_exponential_kernel(self, x1, x2):
+        A = np.abs(x1.reshape(-1, 1, self.d) - x2.reshape(1, -1, self.d))
+        B = np.sin(self.params["nu"] * np.pi * A) / np.array(self.params["r"]).reshape(1, 1, self.d)
+        C = A**2 / np.array(self.params["r2"]).reshape(1, 1, self.d)
+        v0 = self.params["v0"] * np.exp(-np.sum(C, 2) / 2.) * np.exp(-np.sum(B, 2) / 2.)
+        v1 = self.params["v1"]
+        v2 = self.params["v2"] * (x1.reshape(-1, 1) == x2.reshape(1, -1))
+        return v0 + v1 + v2
 
 if __name__ == '__main__':
     def y(x, noise_sigma=0.0):
