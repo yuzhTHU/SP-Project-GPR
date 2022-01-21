@@ -9,6 +9,16 @@ pd.set_option('display.notebook_repr_html',False)
 data = pd.read_excel(r'grid.xls')[:-1]
 data.insert(loc=0, column='Index', value=np.arange(data.shape[0]))
 
+with visualization(figsize=(8,5)) as (vis, fig, ax):
+    ax.set_title('Data in grid.xls')
+    ax.plot(data['Close'], label='Close', zorder=10)
+    ax.plot(data['Open'], label='Open', alpha=0.3)
+    ax.plot(data['High'], label='High', alpha=0.3)
+    ax.plot(data['Low'], label='Low', alpha=0.3)
+    ax.grid('on')
+
+print(np.sum(np.diff(data['Close'].values)>0) / len(np.diff(data['Close'])))
+
 ## Visualization of Different Kernel Functions
 gpr = GPR(optimize=False)
 with visualization(axsize=(4,1), figsize=(5,8), show=False) as (vis, fig, axes):
@@ -19,7 +29,7 @@ with visualization(axsize=(4,1), figsize=(5,8), show=False) as (vis, fig, axes):
     plt.suptitle('Visualization of Different Kernel Functions')
     plt.subplots_adjust(left=.106,bottom=.035,right=.963,top=.902,wspace=.2,hspace=.389)
 
-# Short Term Predict
+## Short Term Predict
 seq_len = 6
 pred_len = 1
 mu = np.zeros(len(data['Close']))
@@ -74,10 +84,50 @@ with visualization(axsize=(2,1), figsize=(8,6)) as (vis, fig, axes):
     # vis.show_param(axes[0], gpr)
     vis.plot_kernal(axes[1], gpr.kernel)
 
+## Interpolation
+train_X = data['Index'][:200:20].values.reshape(-1, 1)
+train_y = data['Close'][:200:20].values.reshape(-1, 1)
+test_X = np.linspace(data['Index'][0], data['Index'].values[-1], 1000).reshape(-1, 1)
+with visualization(axsize=(2,1), figsize=(8,6)) as (vis, fig, axes):
+    gpr = GPR(optimize=True, kernel='squared_exp')
+    gpr.fit(train_X, train_y, r=(1e2,1e4), v0=(1e-4,1e4), v2=(1e-4,1e4), alpha=(1.0, 3.0))
+    mu, std = gpr.predict(test_X)
+    vis.set_data(test_X.reshape(-1), mu.reshape(-1), std)
+    vis.plot_predict_result(axes[0])
+    vis.plot_confidence_interval(axes[0], 0.95)
+    axes[0].plot(data['Close'][:], label='Real')
+    axes[0].scatter(train_X, train_y, color='red', marker='o', label='train data', zorder=10)
+    axes[0].set_title('With Noise Item in Kernel')
+    axes[0].grid('on')
+    axes[0].legend()
+
+    gpr = GPR(optimize=True, kernel='squared_exp')
+    gpr.fit(train_X, train_y, r=(1e2,1e4), v0=(1e-4,1e4), v2=0, alpha=(1.0, 3.0))
+    mu, std = gpr.predict(test_X)
+    vis.set_data(test_X.reshape(-1), mu.reshape(-1), std)
+    vis.plot_predict_result(axes[1])
+    vis.plot_confidence_interval(axes[1], 0.95)
+    axes[1].plot(data['Close'][:], label='Real')
+    axes[1].scatter(train_X, train_y, color='red', marker='o', label='train data', zorder=10)
+    axes[1].set_title('Without Noise Item in Kernel')
+    axes[1].grid('on')
+    axes[1].legend()
+
+    fig.suptitle('Interpolation with Squared Exp Kernel')
+
+
 ## 2-D Period Predict
 data = pd.read_csv(f"CELYAD ONCOLOGY SA (06-19-2015 _ 01-14-2022).csv")
 data.insert(loc=0, column='Index', value=np.arange(data.shape[0]))
 period = 365
+
+with visualization(figsize=(8,5)) as (vis, fig, ax):
+    ax.set_title('Data in CELYAD ONCOLOGY SA (06-19-2015 _ 01-14-2022).csv')
+    ax.plot(data['Close'], label='Close', zorder=10)
+    ax.plot(data['Open'], label='Open', alpha=0.3)
+    ax.plot(data['High'], label='High', alpha=0.3)
+    ax.plot(data['Low'], label='Low', alpha=0.3)
+    ax.grid('on')
 
 all_data = data['Close'].values
 all_data = all_data[:len(all_data) // period * period].reshape([-1, period])
